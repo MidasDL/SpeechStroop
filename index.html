@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Colores Stroop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #color-word {
+            font-size: 3rem;
+            margin: 2rem 0;
+        }
+        button {
+            font-size: 1.2rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #score {
+            font-size: 1.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Juego de Colores Stroop</h1>
+        <button id="start-button">Comenzar</button>
+        <div id="color-word" style="display: none;"></div>
+        <div id="score" style="display: none;"></div>
+    </div>
+
+    <audio id="correct-sound" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
+    <audio id="game-over-sound" src="https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3"></audio>
+
+    <script>
+        const colors = ['AMARILLO', 'NEGRO', 'AZUL', 'ROJO', 'VERDE'];
+        const colorValues = ['yellow', 'black', 'blue', 'red', 'green'];
+        let score = 0;
+        let currentColor;
+        let currentWord;
+        let recognition;
+
+        const startButton = document.getElementById('start-button');
+        const colorWord = document.getElementById('color-word');
+        const scoreDisplay = document.getElementById('score');
+        const correctSound = document.getElementById('correct-sound');
+        const gameOverSound = document.getElementById('game-over-sound');
+
+        startButton.addEventListener('click', startGame);
+
+        function startGame() {
+            score = 0;
+            startButton.style.display = 'none';
+            colorWord.style.display = 'block';
+            scoreDisplay.style.display = 'none';
+            nextWord();
+            startSpeechRecognition();
+        }
+
+        function nextWord() {
+            const colorIndex = Math.floor(Math.random() * colors.length);
+            const wordIndex = Math.floor(Math.random() * colors.length);
+            currentColor = colors[colorIndex];
+            currentWord = colors[wordIndex];
+            colorWord.textContent = currentWord;
+            colorWord.style.color = colorValues[colorIndex];
+        }
+
+        function startSpeechRecognition() {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'es-ES';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = function(event) {
+                const spokenColor = event.results[0][0].transcript.toUpperCase().trim();
+                if (spokenColor === currentColor) {
+                    correctAnswer();
+                } else {
+                    gameOver();
+                }
+            };
+
+            recognition.onend = function() {
+                if (colorWord.style.display !== 'none') {
+                    recognition.start();
+                }
+            };
+
+            recognition.start();
+        }
+
+        function correctAnswer() {
+            score++;
+            correctSound.play();
+            nextWord();
+        }
+
+        function gameOver() {
+            gameOverSound.play();
+            recognition.stop();
+            colorWord.style.display = 'none';
+            scoreDisplay.style.display = 'block';
+            scoreDisplay.textContent = `Juego terminado. Puntaje: ${score}`;
+            startButton.style.display = 'block';
+            startButton.textContent = 'Volver a jugar';
+        }
+    </script>
+</body>
+</html>
